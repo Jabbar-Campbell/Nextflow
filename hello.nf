@@ -42,10 +42,11 @@ process SPLITLETTERS{
     
   
 process CONVERTTOUPPER {
-
+# set incoming variables as/to paths under a variable called y
   input:
-  path y
+  path y 
 
+#output is not assigned a variable but is classified as a stdout type
   output:
   stdout 
 
