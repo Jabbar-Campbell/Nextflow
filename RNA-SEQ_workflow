@@ -1,0 +1,37 @@
+#!/bin/sh/ nextflow
+
+# In this script we will perform our first RNA-SEQ pipeline
+# It will consist of several steps/ tools
+#          step 1: Index a Transcriptome
+#          step 2  Run QC using "FastQC"
+#          step 3  Run a Quantification using "Salmon"
+#          step 4  Create a report using "MultiQC"
+
+
+#first lets set some parameters as seen before using the
+#params function. We feed it a name and what its default
+#value will be. In this case paths to a file...
+# reads are our fq files
+# transcriptome_file will be our reference genome file
+# multiqc will be a folder where our report goes
+# nextflow run scriptname.nf --reads <new parameter> --transriptome_file <new parameter>
+# changes the parameter off of the default
+
+params.reads = "$projectDIR/data/gga;/gut_{1,2}.fq" 
+params.transcriptome_file = "$projectDir/data/ggal/transcriptome.fa"
+params.multiqc = "$projectDir/multiqc"
+#parmas.outdir = "<path to a directory for workflow ooutout>"
+
+
+log_info = """
+  RNASEQ-NF PIPELINE
+  ==================
+  The read files are ${reads}
+  The Transroptome file is ${transcriptome}
+  The multiQC directory is ${multiqc1} 
+  """
+
+#we could feed this process new parameters and store in the variable results
+#with ...
+results = log_info.execute().<new_parameters>
+
