@@ -35,3 +35,25 @@ log_info = """
 #with ...
 results = log_info.execute().<new_parameters>
 
+
+
+# its one thing to use {} indicating a script but if we preceed with process
+# funciton we must have an input and output and some work to be done, in this case
+# we take a path as input use it in a call to salmon along with some other
+# other options  which we'll learn later and then create a channel output called
+# salmon_index which we define as a path
+
+process INDEX{
+   intput:
+     path transcriptome
+
+   output:
+     path 'salmon_index'
+
+    script:
+     """
+     salmon index --threads $task.cpus -t $transcriptome -i salmon_index
+
+     """
+
+}
