@@ -17,6 +17,9 @@
 # nextflow run scriptname.nf --reads <new parameter> --transriptome_file <new parameter>
 # changes the parameter off of the default
 
+####################################################################################
+############################### INDEX ##############################################
+
 params.reads = "$projectDIR/data/gga;/gut_{1,2}.fq" 
 params.transcriptome_file = "$projectDir/data/ggal/transcriptome.fa"
 params.multiqc = "$projectDir/multiqc"
@@ -44,11 +47,11 @@ results = log_info.execute().<new_parameters>
 # salmon_index which we define as a path
 
 process INDEX{
-   intput:
-     path transcriptome
+   input:
+     path transcriptome  #fed in by the script as $transriptome
 
    output:
-     path 'salmon_index'
+     path 'salmon_index' #not a channel yet but it will be set to index_ch later on ;)
 
     script:
      """
@@ -57,3 +60,68 @@ process INDEX{
      """
 
 }
+
+
+
+
+
+# pairs of reads must now be grouped so that they can me mapped to the index file
+# this is done with the .fromFilePairs( checIFExist: true) function
+# the result must be set to channel name
+
+
+read_pairs_ch =  Channel.fromFilePairs(params.reads) 
+#or
+.fromFilePairs(params.reads).set(read_pairs_ch)
+
+
+
+
+
+
+
+
+####################################################################################
+############################### QUANTIFICATION  ###################################
+
+# now that we have an indexed genome and read pairs we are ready to Quantify
+# with the following process. it looks salmon takes the index  sample id and reads and output a path called sample id
+
+
+process QUANTIFICATION {
+
+input:
+ path salmon_index    #this is fed in in the script as $salmon index
+ tuple val(sample_id), path(reads) #this is fed in by the script as read[0] read[1] $sample_id
+
+output:
+  path "$sample_id"
+
+
+script:
+   """
+   salmon quant --threads $task.cpus --libType=U -i $salmon_index -1 ${reads[0]} -2 ${reads[1]} -o $sample_id
+
+   """
+
+}
+
+
+
+
+# Workflows call on process and can string them together while
+# here we calling on  the INDEX process defined above
+# creating a channel of information
+# if you wanted to limit the number of CPU you could set that
+# the global variable $task.cpus variable
+workflow {
+  read_pairs_ch = Channel.fromFilePairs(params.reads)
+
+  index_ch = INDEX(params.transcriptome_file)
+  
+  quant_ch = Quantification(index_ch, read_pairs_ch )
+
+
+}
+
+

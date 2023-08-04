@@ -74,6 +74,9 @@ println x.list()
 (a,b,c) = [10,20, 'foo'] #you can intialize several at once
 
 
+
+x.view() # to see the variable
+
 ###############################MAPS##############################
 
 
