@@ -84,8 +84,11 @@ read_pairs_ch =  Channel.fromFilePairs(params.reads)
 ####################################################################################
 ############################### QUANTIFICATION  ###################################
 
-# now that we have an indexed genome and read pairs we are ready to Quantify
-# with the following process. it looks salmon takes the index  sample id and reads and output a path called sample id
+# Now that we have an indexed genome and read pairs we are ready to Quantify
+# with the following process. Salmon takes the index  sample id plus the reads and
+# spits out and output path called sample id
+# if you wanted to limit the number of CPU you could set that
+# the global variable $task.cpus variable
 
 
 process QUANTIFICATION {
@@ -108,18 +111,22 @@ script:
 
 
 
+######################################################################################
+##############################  WORKFLOW ##############################################
 
-# Workflows call on process and can string them together while
-# here we calling on  the INDEX process defined above
-# creating a channel of information
-# if you wanted to limit the number of CPU you could set that
-# the global variable $task.cpus variable
+# Workflows call on and string together several processess
+# here we are creating on a read_pairs channel
+# the INDEX process defined above is used and its information is converted to
+# a second channel called index_ch. This is used in
+# a following process called Quantification. who also creates a channel
+# called quant_ch
+
 workflow {
   read_pairs_ch = Channel.fromFilePairs(params.reads)
 
   index_ch = INDEX(params.transcriptome_file)
   
-  quant_ch = Quantification(index_ch, read_pairs_ch )
+  quant_ch = QUANTIFICATION(index_ch, read_pairs_ch )
 
 
 }
