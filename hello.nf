@@ -7,6 +7,53 @@
 
 
 #NEXTFLOW basics 
+########################FILES##################################
+file(path_to_file)
+
+list_of_files= file(/path/to/myfiles/*.fa, hidden: true)
+               files(/path/to/myfiles/*.fa, hidden: true)
+
+allLines = my_file.readLines()' #returns list containing all lines
+for( line : allLines ){
+print line
+}
+
+#same thing as above...
+file(path to file)
+    .readLines()
+    .each{println}
+
+
+#reads in one line at a time and prints it out 
+count = 1
+myFile.eachline{str ->
+    print "line ${count} is  ${str}
+     count = count + 1
+}
+
+
+my_file.moveTo(target_directory_to_relocate_to)
+my_file.renameTo(new_name)
+my_file.delete()
+.getName()
+.getBAseName()
+.getExtension()
+.size()
+.lastModified()
+.exist()
+.isEmpty()
+,Countlines()
+.countFasta()
+.countFastQ()
+my_file.append('text you want to add')
+my_file <<  'also adds a line'
+
+
+
+
+
+
+
 ########################VARIABLES#############################
 println "Hello world"  # prints what is in quotes
 
@@ -62,7 +109,9 @@ assert 'pattern_1' ==~ 'pattern_2' // return FALSE #look for exact match
 .replaceFirst(match_sought,"replacment") #replace first occurance
 .replaceALL(match_sought,"replacements") #repalce all occurances
 
+wordStartWithGR = ~/(?i)\s+Gr\w+/ #define regex pattern
 
+(my_string - wordStartWithGR)  #deduct that pattern from a string
 
 
 
