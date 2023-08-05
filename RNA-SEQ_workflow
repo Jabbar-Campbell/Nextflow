@@ -23,7 +23,7 @@
 params.reads = "$projectDIR/data/gga;/gut_{1,2}.fq" 
 params.transcriptome_file = "$projectDir/data/ggal/transcriptome.fa"
 params.multiqc = "$projectDir/multiqc"
-#parmas.outdir = "<path to a directory for workflow ooutout>"
+parmas.outdir = "$projectDir/output"
 
 
 log_info = """
@@ -32,6 +32,7 @@ log_info = """
   The read files are ${reads}
   The Transroptome file is ${transcriptome}
   The multiQC directory is ${multiqc1} 
+  The Output Directoy is ${outdir}
   """
 
 #we could feed this process new parameters and store in the variable results
@@ -48,7 +49,7 @@ results = log_info.execute().<new_parameters>
 
 process INDEX{
    input:
-     path transcriptome  #fed in by the script as $transriptome
+     path transcriptome  ##set variables....fed in by the script as $transriptome
 
    output:
      path 'salmon_index' #not a channel yet but it will be set to index_ch later on ;)
@@ -92,10 +93,11 @@ read_pairs_ch =  Channel.fromFilePairs(params.reads)
 
 
 process QUANTIFICATION {
-
+  tag "$sample_id" #tags help flag a variable and is a readout for each time a process is being used
+  
 input:
- path salmon_index    #this is fed in in the script as $salmon index
- tuple val(sample_id), path(reads) #this is fed in by the script as read[0] read[1] $sample_id
+ path salmon_index    #set variables.....this is fed in in the script as $salmon index
+ tuple val(sample_id), path(reads) #set variables.....this is fed in by the script as read[0] read[1] $sample_id
 
 output:
   path "$sample_id"
@@ -106,8 +108,37 @@ script:
    salmon quant --threads $task.cpus --libType=U -i $salmon_index -1 ${reads[0]} -2 ${reads[1]} -o $sample_id
 
    """
+publishDir params.outdir mode: 'copy' #the output is a path for this process but publishDir sends a copy to the folder of your choosing
+                          #why isnt this the variable ${outdir}????????????????????
 
 }
+
+
+
+
+#####################################################################################
+################################ QUALITY  CONTROL ###################################
+
+process FASTQC {
+input:
+tuple val(sample_id),path(reads) #set variables
+
+output:
+path "fastqc__${sample_id}_logs" # you almost have to know what fastqc does and spits out
+
+script:
+"""
+mkdir fastqc_${sample_id}_logs #make a directory on for each sample id
+fastqc -o fastqc_${sample_id}_logs -f fastq -q ${reads} #use this target directory as a place to put the fast q reads
+
+
+
+"""
+
+
+}
+
+
 
 
 
@@ -128,7 +159,7 @@ workflow {
   
   quant_ch = QUANTIFICATION(index_ch, read_pairs_ch )
 
-
+  fastqc_ch =  FASTQC(read_pairs_ch) #remember this channel is a tuple the process will name the variable as it comes in
 }
 
 
