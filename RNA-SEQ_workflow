@@ -119,21 +119,48 @@ publishDir params.outdir mode: 'copy' #the output is a path for this process but
 #####################################################################################
 ################################ QUALITY  CONTROL ###################################
 
+# This process takes the tuples produced by the  read_pairs channel
+# and uses the fastqc function to make output folders
+# on for each sample_id
+
 process FASTQC {
 input:
-tuple val(sample_id),path(reads) #set variables
+   tuple val(sample_id),path(reads) #set variables
 
 output:
-path "fastqc__${sample_id}_logs" # you almost have to know what fastqc does and spits out
+   path "fastqc__${sample_id}_logs" # you almost have to know what fastqc does and spits out
 
 script:
-"""
-mkdir fastqc_${sample_id}_logs #make a directory on for each sample id
-fastqc -o fastqc_${sample_id}_logs -f fastq -q ${reads} #use this target directory as a place to put the fast q reads
+   """
+   mkdir fastqc_${sample_id}_logs #make a directory on for each sample id
+   fastqc -o fastqc_${sample_id}_logs -f fastq -q ${reads} #use this target directory as a place to put the fast q reads
+
+   """
+
+}
 
 
 
-"""
+########################################################################################
+##############################  QC REPORT #############################################
+# Now that we've created paired reads
+# use them to quantify against an index
+# and perfermed QC on that quantification
+# its time for a report using the multiqc function...
+
+process MULTIQC{
+input:
+   path '*' #the input variable
+
+
+output:
+   path 'mult_report.html'
+
+script:
+   """
+   multiqc .  #when the process is called in workflow (see below) it knows where to look based on the arguments provided ie quant_ch
+
+   """
 
 
 }
@@ -150,7 +177,7 @@ fastqc -o fastqc_${sample_id}_logs -f fastq -q ${reads} #use this target directo
 # the INDEX process defined above is used and its information is converted to
 # a second channel called index_ch. This is used in
 # a following process called Quantification. who also creates a channel
-# called quant_ch
+# called quant_ch    you can view each channel in the out put with .view()
 
 workflow {
   read_pairs_ch = Channel.fromFilePairs(params.reads)
@@ -160,6 +187,14 @@ workflow {
   quant_ch = QUANTIFICATION(index_ch, read_pairs_ch )
 
   fastqc_ch =  FASTQC(read_pairs_ch) #remember this channel is a tuple the process will name the variable as it comes in
+ 
+  multiqc_ch = MULTIQC(quant_ch.mix(fastqc_ch).collect()) #the .collect() function combines channels so that things arent run iteratively
+
+
 }
 
 
+# nextflow.config files allow options like running with docker or sending emails out when something is executed
+# also instead of calling on salmon or other commands in the script area of a process
+# we can call on bash files. or  even R or python scripts.
+# as along as it know what to call the output from the script we're golden
